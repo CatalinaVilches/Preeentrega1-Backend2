@@ -12,16 +12,13 @@ import sessionRouter from './routes/session.router.js';
 const app = express();
 const PRIVATE_KEY = "CoderKeyQueFuncionaComoUnSecret";
 
-//configurar para trabajar con json 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//Configuro cookie parser y passport
 app.use(cookieParser());
 initializePassport();
 app.use(passport.initialize());
 
-// Servir archivos estáticos desde la carpeta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', viewsRouter);
