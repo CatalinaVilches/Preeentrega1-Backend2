@@ -5,25 +5,21 @@ import jwt from 'jsonwebtoken';
 import passport from 'passport';
 
 const router = express.Router();
-const JWT_SECRET = 'coderSecret';  // Clave secreta para firmar el JWT
+const JWT_SECRET = 'coderSecret'; 
 
-// **Registración**
 router.post('/register', async (req, res) => {
     try {
         const { first_name, last_name, email, age, password } = req.body;
 
-        // Verificar que todos los campos estén presentes
         if (!first_name || !last_name || !email || !age || !password) {
             return res.status(400).send({ status: false, message: 'All fields are required' });
         }
 
-        // Verificar si el usuario ya existe
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).send({ status: false, message: 'User already exists' });
         }
 
-        // Crear el nuevo usuario con la contraseña en hash
         let newUser = new User({
             first_name,
             last_name,
@@ -32,13 +28,10 @@ router.post('/register', async (req, res) => {
             password: createHash(password)
         });
 
-        // Guardar en la base de datos
         await newUser.save();
 
-        // Generar un token JWT con el usuario recién creado
         const token = jwt.sign({ id: newUser._id, email: newUser.email, role: 'user' }, JWT_SECRET, { expiresIn: '24h' });
 
-        // Enviar el token al cliente
         res.status(201).send({ status: 'success', access_token: token });
 
     } catch (error) {
@@ -47,7 +40,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// **Iniciar sesión** (con JWT en cookie)
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -66,10 +58,8 @@ router.post('/login', async (req, res) => {
             return res.status(403).send({ status: "error", message: 'Contraseña incorrecta' });
         }
 
-        // Generar token JWT con la información del usuario
         const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
 
-        // Enviar el token en una cookie httpOnly
         res.cookie('tokenCookie', token, { httpOnly: true, maxAge: 60 * 60 * 1000 }).send({ message: 'Login exitoso' });
 
     } catch (error) {
@@ -78,7 +68,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// **Iniciar sesión** (con JWT en la respuesta)
 router.post('/loginLocalStorage', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -92,10 +81,8 @@ router.post('/loginLocalStorage', async (req, res) => {
             return res.status(403).send({ message: 'Contraseña incorrecta' });
         }
 
-        // Generar el token JWT
         const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
 
-        // Enviar el token en la respuesta
         res.send({ message: 'Login exitoso', token });
 
     } catch (error) {
@@ -104,7 +91,6 @@ router.post('/loginLocalStorage', async (req, res) => {
     }
 });
 
-// **Restauración de contraseña**
 router.post('/restore-password', async (req, res) => {
     const { email, newPassword } = req.body;
     try {
@@ -113,7 +99,6 @@ router.post('/restore-password', async (req, res) => {
             return res.status(400).send({ status: 'error', message: 'User not found' });
         }
 
-        // Crear un nuevo hash de la contraseña
         user.password = createHash(newPassword);
         await user.save();
 
@@ -124,15 +109,11 @@ router.post('/restore-password', async (req, res) => {
     }
 });
 
-// **Cerrar sesión** (eliminar cookie JWT)
 router.post('/logout', (req, res) => {
-    // Eliminar la cookie que contiene el token JWT
     res.clearCookie('tokenCookie').send({ message: 'Logout exitoso' });
 });
 
-// **Ruta /current**: Obtener datos del usuario a partir del JWT en las cookies
 router.get('/current', passport.authenticate('jwt', { session: false }), (req, res) => {
-    // Si se autentica correctamente, el usuario estará en req.user
     res.send({ status: 'success', user: req.user });
 });
 
