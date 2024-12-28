@@ -17,7 +17,6 @@ document.getElementById('loginForm')
             console.log('Login exitoso');
             console.log(document.cookie);
 
-            //Redirigimos a otra página
         }else{
             console.error('Error en el login');      
         }
